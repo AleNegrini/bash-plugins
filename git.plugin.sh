@@ -5,10 +5,12 @@
 function parse_git_branch() {
  git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/(\1)/'
 }
-
 # The name of the current branch
-function git_current_branch() {
-  git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/(\1)/'
+# Back-compatibility wrapper for when this function was defined here in
+# the plugin, before being pulled in to core lib/git.zsh as current_branch()
+# to fix the core -> git plugin dependency.
+function current_branch() {
+  parse_git_branch | tail -c +2 | head -c -2
 }
 # The list of remotes
 function current_repository() {
@@ -89,7 +91,7 @@ alias gbm='command git branch --move'
 alias gbnm='command git branch --no-merged'
 alias gbr='command git branch --remote'
 alias gbsc='command git branch --show-current'
-alias ggsup='command git branch --set-upstream-to="origin/$(git_current_branch)"'
+alias ggsup='command git branch --set-upstream-to="origin/$(current_branch)"'
 
 alias gbs='command git bisect'
 alias gbsb='command git bisect bad'
@@ -208,10 +210,10 @@ alias gmtvim='command git mergetool --no-prompt --tool=vimdiff' # deprecate?
 alias gmtl='command git mergetool --no-prompt'
 alias gmtlvim='command git mergetool --no-prompt --tool=vimdiff'
 
-alias ggpull='command git pull origin "$(git_current_branch)"'
+alias ggpull='command git pull origin "$(current_branch)"'
 alias ggpur='ggu'
 alias gl='command git pull'
-alias gluc='command git pull upstream "$(git_current_branch)"'
+alias gluc='command git pull upstream "$(current_branch)"'
 alias glum='command git pull upstream "$(git_main_branch)"'
 alias gpr='command git pull --rebase'
 alias gup='command git pull --rebase'
@@ -225,13 +227,13 @@ function ggl {
     command git pull origin "$*"
   else
     local b=
-    (($# == 0)) && b=$(git_current_branch)
+    (($# == 0)) && b=$(current_branch)
     command git pull origin "${b:-$1}"
   fi
 }
 function ggu {
   local b=
-  (($# != 1)) && b=$(git_current_branch)
+  (($# != 1)) && b=$(current_branch)
   command git pull --rebase origin "${b:-$1}"
 }
 #compdef _git ggl=git-checkout
@@ -239,32 +241,32 @@ function ggu {
 #compdef _git ggpur=git-checkout
 #compdef _git ggu=git-checkout
 
-alias ggpush='command git push origin "$(git_current_branch)"'
+alias ggpush='command git push origin "$(current_branch)"'
 alias gp='command git push'
 alias gpd='command git push --dry-run'
 alias gpf!='command git push --force'
 alias gpf='command git push --force-with-lease'
 alias gpoat='command git push origin --all && command git push origin --tags'
 alias gpod='command git push origin --delete'
-alias gpsup='command git push --set-upstream origin "$(git_current_branch)"'
-alias gpsupf='command git push --set-upstream origin "$(git_current_branch)" --force-with-lease'
+alias gpsup='command git push --set-upstream origin "$(current_branch)"'
+alias gpsupf='command git push --set-upstream origin "$(current_branch)" --force-with-lease'
 alias gpu='command git push upstream'
 alias gpv='command git push --verbose'
 #is-at-least 2.30 "$git_version" && alias gpf='git push --force-with-lease --force-if-includes'
-#is-at-least 2.30 "$git_version" && alias gpsupf='git push --set-upstream origin "$(git_current_branch)" --force-with-lease --force-if-includes'
+#is-at-least 2.30 "$git_version" && alias gpsupf='git push --set-upstream origin "$(current_branch)" --force-with-lease --force-if-includes'
 function ggf {
-  (($# != 1)) && local b=$(git_current_branch)
+  (($# != 1)) && local b=$(current_branch)
   command git push --force origin "${b:=$1}"
 }
 function ggfl {
-  (($# != 1)) && local b=$(git_current_branch)
+  (($# != 1)) && local b=$(current_branch)
   command git push --force-with-lease origin "${b:=$1}"
 }
 function ggp {
   if (($# != 0 && $# != 1)); then
     command git push origin "$*"
   else
-    (($# == 0)) && local b=$(git_current_branch)
+    (($# == 0)) && local b=$(current_branch)
     command git push origin "${b:=$1}"
   fi
 }
@@ -305,7 +307,7 @@ alias grh='command git reset'
 alias grhh='command git reset --hard'
 alias grhk='command git reset --keep'
 alias grhs='command git reset --soft'
-alias groh='command git reset "origin/$(git_current_branch)" --hard'
+alias groh='command git reset "origin/$(current_branch)" --hard'
 alias grt='cd $(command git rev-parse --show-toplevel || echo ".")'
 alias gru='command git reset --'
 
@@ -380,4 +382,4 @@ alias gke='\gitk --all $(git log --walk-reflogs --pretty=%h)'
 #compdef _git gke='command gitk'
 
 ## Add the branch name to the bash
-export PS1='${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[01;31m\]$(git_current_branch)\[\033[00m\]\$ '
+export PS1='${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[01;31m\]$(parse_git_branch)\[\033[00m\]\$ '
