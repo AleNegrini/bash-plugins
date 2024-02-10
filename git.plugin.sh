@@ -5,12 +5,10 @@
 function parse_git_branch() {
  git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/(\1)/'
 }
+
 # The name of the current branch
-# Back-compatibility wrapper for when this function was defined here in
-# the plugin, before being pulled in to core lib/git.zsh as git_current_branch()
-# to fix the core -> git plugin dependency.
-function current_branch() {
-  git_current_branch
+function git_current_branch() {
+  git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/(\1)/'
 }
 # The list of remotes
 function current_repository() {
@@ -382,4 +380,4 @@ alias gke='\gitk --all $(git log --walk-reflogs --pretty=%h)'
 #compdef _git gke='command gitk'
 
 ## Add the branch name to the bash
-export PS1='${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[01;31m\]$(parse_git_branch)\[\033[00m\]\$ '
+export PS1='${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[01;31m\]$(git_current_branch)\[\033[00m\]\$ '
