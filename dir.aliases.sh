@@ -5,3 +5,4 @@ function mkcd() {
 }
 
 alias mkcd='mkcd'
+shopt -s autocd
